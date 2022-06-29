@@ -5,7 +5,7 @@ enum Op {
     Dump,
 }
 
-fn simulate_program(program:&[Op]){
+fn simulate_program(program: &Vec<Op>){
     let mut stack: Vec<i64> = Vec::new();
     for op in program {
         match *op {
@@ -27,7 +27,7 @@ fn simulate_program(program:&[Op]){
     }
 }
 
-fn compile_program(program:&[Op], output:&str){
+fn compile_program(program: &Vec<Op>, output:&str){
     use std::fs::File;
     use std::io::Write;
     let mut out = File::create(&*format!("{}.asm", output)).unwrap();
@@ -69,7 +69,7 @@ fn compile_program(program:&[Op], output:&str){
     writeln!(out, "_start:").unwrap();
 
     for op in program {
-        match *op {
+        match op {
             Op::Push(x) => {
                 writeln!(out, "    push {}",x).unwrap();
             },
@@ -88,7 +88,7 @@ fn compile_program(program:&[Op], output:&str){
             Op::Dump => {
                 writeln!(out, "    pop rdi").unwrap();
                 writeln!(out, "    call dump").unwrap();
-            }
+            } 
         }
     }
 
@@ -97,24 +97,78 @@ fn compile_program(program:&[Op], output:&str){
     writeln!(out, "    syscall").unwrap();
 }
 
+fn parse_word_as_op(program: &mut Vec<Op>, tok: &str){
+    use std::process::exit;
+    let test = tok.parse::<i64>();
+    match test {
+        Ok(_) => {
+            let i = tok.parse::<i64>().unwrap();
+            program.push(Op::Push(i));
+        },
+        _ => { 
+            match tok { 
+                "+" => {
+                            program.push(Op::Add);
+                },
+                "-" => {
+                    program.push(Op::Sub);
+                },
+                "." => {
+                    program.push(Op::Dump);
+                },
+                _ => {
+                    exit(1);
+                }
+            }
+        }
+    }
+}
+
+fn parse_program(program: &mut Vec<Op>, input: &str){
+    use std::fs::File;
+    use std::io::Read;
+
+    match File::open(input){
+        Ok(mut file) => {
+            let mut content = String::new();
+            file.read_to_string(&mut content).unwrap();
+            let tokens = content.split_whitespace();
+            for tok in tokens {
+                parse_word_as_op(program, tok);
+            }
+        },
+        Err(error) => {
+            println!("Error opening file {}: {}", input, error);
+        },
+    }
+}
+
 fn main() {
     use std::process::Command;
-    let output_path = "src/output";
+    use std::env;
+    use std::process::exit;
 
-    let program = [
-        Op::Push(34),
-        Op::Push(35),
-        Op::Add,
-        Op::Dump,
-        Op::Push(500),
-        Op::Push(80),
-        Op::Sub,
-        Op::Dump
-    ];
+    let args: Vec<String> = env::args().collect();
+    let program: &mut Vec<Op> = &mut Vec::new();
+    println!("{:?}", args);
+    if args.len() < 4 {
+        exit(1);
+    }
+    let sub_cmd = &args[1];
+    let input_path = &args[2];
+    let output_path = &args[3];
 
-    simulate_program(&program);
-    compile_program(&program, &output_path);
+    parse_program(program, &input_path);
 
+    if sub_cmd == "sim" { 
+        simulate_program(program);
+    }
+    else if sub_cmd == "com" {
+        compile_program(program, &output_path);
+    }
+    else {
+        println!("Invalid command");
+    }
     Command::new("nasm")
         .args(["-felf64", &*format!("{}.asm", output_path)])
         .output()
