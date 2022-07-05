@@ -4,6 +4,10 @@ enum Op {
     Add,
     Sub,
     Equal,
+    LessThan,
+    GreaterThan,
+    LessThanEqual,
+    GreaterThanEqual,
     If(usize),
     End,
     Dump,
@@ -85,6 +89,30 @@ fn simulate_program(program: &Vec<Op>){
                 let a = stack.pop().unwrap();
                 let b = stack.pop().unwrap();
                 stack.push((a == b) as i64);
+                ip += 1;
+            },
+            Op::LessThan => {
+                let b = stack.pop().unwrap();
+                let a = stack.pop().unwrap();
+                stack.push((a < b) as i64);
+                ip += 1;
+            },
+            Op::GreaterThan => {
+                let b = stack.pop().unwrap();
+                let a = stack.pop().unwrap();
+                stack.push((a > b) as i64);
+                ip += 1;
+            },
+            Op::LessThanEqual => {
+                let b = stack.pop().unwrap();
+                let a = stack.pop().unwrap();
+                stack.push((a <= b) as i64);
+                ip += 1;
+            },
+            Op::GreaterThanEqual => {
+                let b = stack.pop().unwrap();
+                let a = stack.pop().unwrap();
+                stack.push((a >= b) as i64);
                 ip += 1;
             },
             Op::Dump => {
@@ -180,6 +208,46 @@ fn compile_program(program: &Vec<Op>, output:&str){
                 writeln!(out, "    cmove rcx, rdx").unwrap();
                 writeln!(out, "    push rcx").unwrap();
             },
+            Op::LessThan => {
+                writeln!(out, "    ;; -- less --").unwrap();
+                writeln!(out, "    mov rcx, 1").unwrap();
+                writeln!(out, "    mov rdx, 0").unwrap();
+                writeln!(out, "    pop rax").unwrap();
+                writeln!(out, "    pop rbx").unwrap();
+                writeln!(out, "    cmp rax, rbx").unwrap();
+                writeln!(out, "    cmovl rcx, rdx").unwrap();
+                writeln!(out, "    push rcx").unwrap();
+            },
+            Op::GreaterThan => {
+                writeln!(out, "    ;; -- greater --").unwrap();
+                writeln!(out, "    mov rcx, 1").unwrap();
+                writeln!(out, "    mov rdx, 0").unwrap();
+                writeln!(out, "    pop rax").unwrap();
+                writeln!(out, "    pop rbx").unwrap();
+                writeln!(out, "    cmp rax, rbx").unwrap();
+                writeln!(out, "    cmovg rcx, rdx").unwrap();
+                writeln!(out, "    push rcx").unwrap();
+            },
+            Op::LessThanEqual => {
+                writeln!(out, "    ;; -- less/equal --").unwrap();
+                writeln!(out, "    mov rcx, 1").unwrap();
+                writeln!(out, "    mov rdx, 0").unwrap();
+                writeln!(out, "    pop rax").unwrap();
+                writeln!(out, "    pop rbx").unwrap();
+                writeln!(out, "    cmp rax, rbx").unwrap();
+                writeln!(out, "    cmovle rcx, rdx").unwrap();
+                writeln!(out, "    push rcx").unwrap();
+            },
+            Op::GreaterThanEqual => {
+                writeln!(out, "    ;; -- greater/equal --").unwrap();
+                writeln!(out, "    mov rcx, 1").unwrap();
+                writeln!(out, "    mov rdx, 0").unwrap();
+                writeln!(out, "    pop rax").unwrap();
+                writeln!(out, "    pop rbx").unwrap();
+                writeln!(out, "    cmp rax, rbx").unwrap();
+                writeln!(out, "    cmovge rcx, rdx").unwrap();
+                writeln!(out, "    push rcx").unwrap();
+            },
             Op::Dump => {
                 writeln!(out, "    ;; -- dump --").unwrap();
                 writeln!(out, "    pop rdi").unwrap();
@@ -225,6 +293,18 @@ fn parse_word_as_op(program: &mut Vec<Op>, tok: &str){
                 },
                 "=" => {
                     program.push(Op::Equal);
+                },
+                "<" => {
+                    program.push(Op::LessThan);
+                },
+                ">" => {
+                    program.push(Op::GreaterThan);
+                },
+                "<=" => {
+                    program.push(Op::LessThanEqual);
+                },
+                ">=" => {
+                    program.push(Op::GreaterThanEqual);
                 },
                 "if" => {
                     program.push(Op::If(0 as usize));
