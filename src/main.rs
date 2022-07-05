@@ -1,28 +1,107 @@
+#[derive(Copy, Clone)]
 enum Op {
     Push(i64),
     Add,
     Sub,
+    Equal,
+    If(usize),
+    End,
     Dump,
+}
+
+fn crossreference_block<'a>(program: &mut Vec<Op>) -> &mut Vec<Op>{
+    let stack: &mut Vec<usize> = &mut Vec::new();
+    for ip in 0..program.len() {
+        let op = program[ip];
+        match op {
+            Op::If(_x) => {
+                stack.push(ip);
+            },
+            Op::End => {
+                let if_ip = stack.pop();
+                match if_ip {
+                    Some(if_ip) => program[if_ip] = Op::If(ip),
+                    None => todo!(),
+                }
+            },
+            _ => {}
+        }
+    }
+    /*
+    for pp in 0..program.len() {
+        let rp = program[pp];
+        match rp {
+            Op::Push(x) => {
+                println!("push {}", x);
+            },
+            Op::Add => {
+                println!("add");
+            },
+            Op::Sub => {
+                println!("sub");
+            },
+            Op::Equal => {
+                println!("equal");
+            },
+            Op::Dump => {
+                println!("dump");
+            },
+            Op::If(x) => {
+                println!("if {}", x);
+            },
+            Op::End => {
+                println!("end");
+            },
+
+        }
+    }
+    */
+    return program;
 }
 
 fn simulate_program(program: &Vec<Op>){
     let mut stack: Vec<i64> = Vec::new();
-    for op in program {
-        match *op {
-            Op::Push(x) => stack.push(x),
+    let mut ip = 0;
+    while ip < program.len() {
+        let op = program[ip];
+        match op {
+            Op::Push(x) => {
+                stack.push(x);
+                ip += 1;
+            },
             Op::Add => {
                 let a = stack.pop().unwrap();
                 let b = stack.pop().unwrap();
                 stack.push(a + b);
+                ip += 1;
             },
             Op::Sub => {
                 let a = stack.pop().unwrap();
                 let b = stack.pop().unwrap();
                 stack.push(b - a);
+                ip += 1;
+            },
+            Op::Equal => {
+                let a = stack.pop().unwrap();
+                let b = stack.pop().unwrap();
+                stack.push((a == b) as i64);
+                ip += 1;
             },
             Op::Dump => {
                 println!("{:?}", stack.remove(0));
-            }
+                ip += 1;
+            },
+            Op::If(x) => {
+                let a = stack.pop().unwrap();
+                if a == 0 {
+                    ip = x;
+                }else {
+                    ip += 1;
+                }
+            },
+            Op::End => {
+                ip += 1;
+            },
         }
     }
 }
@@ -31,13 +110,14 @@ fn compile_program(program: &Vec<Op>, output:&str){
     use std::fs::File;
     use std::io::Write;
     let mut out = File::create(&*format!("{}.asm", output)).unwrap();
+    writeln!(out, "BITS 64").unwrap();
     writeln!(out, "segment .text").unwrap();
     writeln!(out, "dump:").unwrap();
     writeln!(out, "    mov    r9, -3689348814741910323").unwrap();
     writeln!(out, "    sub    rsp, 40").unwrap();
     writeln!(out, "    mov    BYTE [rsp+31], 10").unwrap();
     writeln!(out, "    lea    rcx, [rsp+30]").unwrap();
-    writeln!(out, ".L2").unwrap();
+    writeln!(out, ".L2:").unwrap();
     writeln!(out, "    mov    rax, rdi").unwrap();
     writeln!(out, "    lea    r8, [rsp+32]").unwrap();
     writeln!(out, "    mul    r9").unwrap();
@@ -68,28 +148,55 @@ fn compile_program(program: &Vec<Op>, output:&str){
     writeln!(out, "global _start").unwrap();
     writeln!(out, "_start:").unwrap();
 
-    for op in program {
+    let mut ip = 0;
+    while ip < program.len() {
+        let op = program[ip];
         match op {
             Op::Push(x) => {
-                writeln!(out, "    push {}",x).unwrap();
+                writeln!(out, "    ;; -- push --").unwrap();
+                writeln!(out, "    push {}", x).unwrap();
             },
             Op::Add => {
+                writeln!(out, "    ;; -- add --").unwrap();
                 writeln!(out, "    pop rax").unwrap();
                 writeln!(out, "    pop rbx").unwrap();
                 writeln!(out, "    add rbx, rax").unwrap();
                 writeln!(out, "    push rbx").unwrap();
             },
             Op::Sub => {
+                writeln!(out, "    ;; -- sub --").unwrap();
                 writeln!(out, "    pop rax").unwrap();
                 writeln!(out, "    pop rbx").unwrap();
                 writeln!(out, "    sub rbx, rax").unwrap();
                 writeln!(out, "    push rbx").unwrap();
             },
+            Op::Equal => {
+                writeln!(out, "    ;; -- equal --").unwrap();
+                writeln!(out, "    mov rcx, 0").unwrap();
+                writeln!(out, "    mov rdx, 1").unwrap();
+                writeln!(out, "    pop rax").unwrap();
+                writeln!(out, "    pop rbx").unwrap();
+                writeln!(out, "    cmp rax, rbx").unwrap();
+                writeln!(out, "    cmove rcx, rdx").unwrap();
+                writeln!(out, "    push rcx").unwrap();
+            },
             Op::Dump => {
+                writeln!(out, "    ;; -- dump --").unwrap();
                 writeln!(out, "    pop rdi").unwrap();
                 writeln!(out, "    call dump").unwrap();
-            } 
+            },
+            Op::If(x) => {
+                writeln!(out, "    ;; -- if --").unwrap();
+                writeln!(out, "    pop rax").unwrap();
+                writeln!(out, "    test rax, rax").unwrap();
+                writeln!(out, "    jz addr_{}", x).unwrap();
+            }, 
+            Op::End => {
+                writeln!(out, "    ;; -- end --").unwrap();
+                writeln!(out, "addr_{}:", ip).unwrap();
+            },
         }
+        ip += 1;
     }
 
     writeln!(out, "    mov rax, 60").unwrap();
@@ -108,7 +215,7 @@ fn parse_word_as_op(program: &mut Vec<Op>, tok: &str){
         _ => { 
             match tok { 
                 "+" => {
-                            program.push(Op::Add);
+                    program.push(Op::Add);
                 },
                 "-" => {
                     program.push(Op::Sub);
@@ -116,6 +223,15 @@ fn parse_word_as_op(program: &mut Vec<Op>, tok: &str){
                 "." => {
                     program.push(Op::Dump);
                 },
+                "=" => {
+                    program.push(Op::Equal);
+                },
+                "if" => {
+                    program.push(Op::If(0 as usize));
+                }
+                "end" => {
+                    program.push(Op::End);
+                }
                 _ => {
                     exit(1);
                 }
@@ -149,7 +265,7 @@ fn main() {
     use std::process::exit;
 
     let args: Vec<String> = env::args().collect();
-    let program: &mut Vec<Op> = &mut Vec::new();
+    let mut program: &mut Vec<Op> = &mut Vec::new();
     println!("{:?}", args);
     if args.len() < 4 {
         exit(1);
@@ -159,6 +275,7 @@ fn main() {
     let output_path = &args[3];
 
     parse_program(program, &input_path);
+    program = crossreference_block(program);
 
     if sub_cmd == "sim" { 
         simulate_program(program);
@@ -169,6 +286,7 @@ fn main() {
     else {
         println!("Invalid command");
     }
+
     Command::new("nasm")
         .args(["-felf64", &*format!("{}.asm", output_path)])
         .output()
