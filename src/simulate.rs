@@ -52,9 +52,26 @@ pub fn simulate_program(program: &Vec<Op>){
                 stack.push((a >= b) as i64);
                 ip += 1;
             },
+            Op::Duplicate => {
+                let a = stack.pop().unwrap();
+                stack.push(a);
+                stack.push(a);
+                ip += 1;
+            },
             Op::Dump => {
                 println!("{:?}", stack.remove(0));
                 ip += 1;
+            },
+            Op::While => {
+                ip += 1;
+            },
+            Op::Do(x) => {
+                let a = stack.pop().unwrap();
+                if a == 0 {
+                    ip = x;
+                } else {
+                    ip += 1;
+                }
             },
             Op::If(x) => {
                 let a = stack.pop().unwrap();
@@ -67,8 +84,8 @@ pub fn simulate_program(program: &Vec<Op>){
             Op::Else(x) => {
                 ip = x;
             },
-            Op::End => {
-                ip += 1;
+            Op::End(x) => {
+                ip = x;
             },
         }
     }

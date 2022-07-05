@@ -16,17 +16,39 @@ pub fn crossreference_block<'a>(program: &mut Vec<Op>) -> &mut Vec<Op>{
                 }
                 stack.push(ip);
             },
-            Op::End => {
+            Op::End(_x) => {
                 let block_ip = stack.pop();
                 match block_ip {
                     Some(block_ip) => {
-                        if matches!(program[block_ip], Op::If(0)){
+                        if matches!(program[block_ip], Op::If(_)){
                             program[block_ip] = Op::If(ip);
-                        }else if matches!(program[block_ip], Op::Else(0)) {
+                        }else if matches!(program[block_ip], Op::Else(_)) {
                             program[block_ip] = Op::Else(ip);
+                            program[ip] = Op::End(ip + 1);
+                        } else if matches!(program[block_ip], Op::Do(_)){
+                            match program[block_ip] {
+                                Op::Do(y) => {
+                                    program[ip] = Op::End(y);
+                                },
+                                _ => {}
+                            }
+                            program[block_ip] = Op::Do(ip + 1);
                         } else {
                             println!("End can only close if blocks for now");
                         }
+                    },
+                    None => todo!()
+                }
+            },
+            Op::While => {
+                stack.push(ip);
+            },
+            Op::Do(_x) => {
+                let while_ip = stack.pop();
+                match while_ip {
+                    Some(while_ip) => {
+                        program[ip] = Op::Do(while_ip);
+                        stack.push(ip);
                     },
                     None => todo!()
                 }
@@ -59,8 +81,8 @@ pub fn print (program: &mut Vec<Op>) {
             Op::If(x) => {
                 println!("if {}", x);
             },
-            Op::End => {
-                println!("end");
+            Op::End(x) => {
+                println!("end {}", x);
             },
             Op::LessThan => {
                 println!("lessthan");
@@ -74,6 +96,15 @@ pub fn print (program: &mut Vec<Op>) {
             Op::GreaterThanEqual => {
                 println!("greaterthanequal");
             },
+            Op::Duplicate => {
+                println!("duplicate");
+            },
+            Op::While => {
+                println!("while");
+            },
+            Op::Do(x) => {
+                println!("do {}", x);
+            }
             _ => {}
         }
     }
@@ -121,9 +152,19 @@ fn parse_word_as_op(program: &mut Vec<Op>, tok: &str){
                     program.push(Op::Else(0 as usize));
                 },
                 "end" => {
-                    program.push(Op::End);
+                    program.push(Op::End(0 as usize));
                 },
+                "dup" => {
+                    program.push(Op::Duplicate);
+                },
+                "while" => {
+                    program.push(Op::While);
+                },
+                "do" => {
+                    program.push(Op::Do(0 as usize));
+                }
                 _ => {
+                    println!("{} not implemented", tok);
                     exit(1);
                 }
             }

@@ -10,7 +10,9 @@ pub enum Op {
     GreaterThanEqual,
     If(usize),
     Else(usize),
-    End,
+    End(usize),
     Duplicate,
     Dump,
+    Do(usize),
+    While,
 }

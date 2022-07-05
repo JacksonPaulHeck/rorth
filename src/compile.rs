@@ -44,6 +44,7 @@ pub fn compile_program(program: &Vec<Op>, output:&str){
 
     let mut ip = 0;
     while ip < program.len() {
+        writeln!(out, "addr_{}:", ip).unwrap();
         let op = program[ip];
         match op {
             Op::Push(x) => {
@@ -119,6 +120,9 @@ pub fn compile_program(program: &Vec<Op>, output:&str){
                 writeln!(out, "    pop rdi").unwrap();
                 writeln!(out, "    call dump").unwrap();
             },
+            Op::While => {
+                writeln!(out, "    ;; -- while --").unwrap(); 
+            },
             Op::If(x) => {
                 writeln!(out, "    ;; -- if --").unwrap();
                 writeln!(out, "    pop rax").unwrap();
@@ -128,16 +132,30 @@ pub fn compile_program(program: &Vec<Op>, output:&str){
             Op::Else(x) => {
                 writeln!(out, "    ;; -- else --").unwrap();
                 writeln!(out, "    jmp addr_{}", x).unwrap();
-                writeln!(out, "addr_{}:", ip + 1).unwrap();
             },
-            Op::End => {
+            Op::End(x) => {
                 writeln!(out, "    ;; -- end --").unwrap();
-                writeln!(out, "addr_{}:", ip).unwrap();
+                if ip + 1 != x{
+                    writeln!(out, "    jmp addr_{}", x).unwrap();
+                }
+            },
+            Op::Duplicate => {
+                writeln!(out, "    ;; -- duplicate --").unwrap();
+                writeln!(out, "    pop rax").unwrap();
+                writeln!(out, "    push rax").unwrap();
+                writeln!(out, "    push rax").unwrap();
+            },
+            Op::Do(x) => {
+                writeln!(out, "    ;; -- do --").unwrap();
+                writeln!(out, "    pop rax").unwrap();
+                writeln!(out, "    test rax, rax").unwrap();
+                writeln!(out, "    jz addr_{}", x).unwrap();
             },
         }
         ip += 1;
     }
 
+    writeln!(out, "addr_{}", ip).unwrap();
     writeln!(out, "    mov rax, 60").unwrap();
     writeln!(out, "    mov rdi, 0").unwrap();
     writeln!(out, "    syscall").unwrap();
