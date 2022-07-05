@@ -1,3 +1,7 @@
 /target
 src/*
 !src/main.rs
+!src/op.rs
+!src/compile.rs
+!src/simulate.rs
+!src/parse.rs
