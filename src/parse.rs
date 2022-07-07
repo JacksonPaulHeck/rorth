@@ -22,6 +22,7 @@ pub fn crossreference_block<'a>(program: &mut Vec<Op>) -> &mut Vec<Op>{
                     Some(block_ip) => {
                         if matches!(program[block_ip], Op::If(_)){
                             program[block_ip] = Op::If(ip);
+                            program[ip] = Op::End(ip + 1);
                         }else if matches!(program[block_ip], Op::Else(_)) {
                             program[block_ip] = Op::Else(ip);
                             program[ip] = Op::End(ip + 1);
@@ -172,6 +173,43 @@ fn parse_word_as_op(program: &mut Vec<Op>, tok: &str){
     }
 }
 
+use std::iter::Enumerate;
+
+fn strip_line(line: &str, mut col: usize) -> usize{
+    println!("line:  {}", line);
+    while col < line.len() && line.chars().nth(col).unwrap().is_whitespace(){
+       col += 1;
+    }
+
+    println!("COl {}", col);
+    return col;
+}
+
+fn parse_line(line: &str) -> Enumerate<std::vec::IntoIter<&str>>{
+    // let l = line.chars().enumerate();
+    let t: &mut Vec<(usize, &str)> = &mut Vec::new();
+    let mut col = strip_line(line, 0);
+    while col < line.len() {
+        let mut col_end = line.find(' ').unwrap();
+        if col_end < 0 {
+            col_end = line.len();
+        }else if col_end == 0 {
+
+        }
+        t.push((col, &line[col..col_end]));
+        col = strip_line(line, 0); 
+    }
+
+
+    println!("{:?}", t);
+
+    let tokens: Vec<&str> = line.split_whitespace().collect();
+
+    let e = tokens.into_iter().enumerate();
+
+    return e;
+}
+
 pub fn parse_program(program: &mut Vec<Op>, input: &str){
     use std::fs::File;
     use std::io::Read;
@@ -180,9 +218,16 @@ pub fn parse_program(program: &mut Vec<Op>, input: &str){
         Ok(mut file) => {
             let mut content = String::new();
             file.read_to_string(&mut content).unwrap();
-            let tokens = content.split_whitespace();
-            for tok in tokens {
-                parse_word_as_op(program, tok);
+            let tokens: Vec<&str> = content.lines().collect();
+
+            println!("{:?}", tokens);
+            let e = tokens.into_iter().enumerate();
+            println!("{:?}", e);
+
+            for (row, line) in e {
+                for (col, tok) in parse_line(line) {
+                    parse_word_as_op(program, tok);
+                }
             }
         },
         Err(error) => {

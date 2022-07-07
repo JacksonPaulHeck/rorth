@@ -4,6 +4,7 @@ pub fn simulate_program(program: &Vec<Op>){
     let mut stack: Vec<i64> = Vec::new();
     let mut ip = 0;
     while ip < program.len() {
+        //println!("{:#?}", stack);
         let op = program[ip];
         match op {
             Op::Push(x) => {
@@ -59,7 +60,7 @@ pub fn simulate_program(program: &Vec<Op>){
                 ip += 1;
             },
             Op::Dump => {
-                println!("{:?}", stack.remove(0));
+                println!("{:?}", stack.pop().unwrap());
                 ip += 1;
             },
             Op::While => {
