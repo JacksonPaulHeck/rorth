@@ -60,6 +60,7 @@ pub fn crossreference_block<'a>(program: &mut Vec<Op>) -> &mut Vec<Op>{
     return program;
 }
 
+#[allow(dead_code)]
 pub fn print (program: &mut Vec<Op>) {
     for pp in 0..program.len() {
         let rp = program[pp];
@@ -112,101 +113,85 @@ pub fn print (program: &mut Vec<Op>) {
 }
 
 
-fn parse_word_as_op(program: &mut Vec<Op>, tok: &str){
+fn parse_word_as_op(program: &mut Vec<Op>, token: (&str, usize, usize, Option<&str>)){
+    let tok = token.3.unwrap();
     use std::process::exit;
-    let test = tok.parse::<i64>();
-    match test {
-        Ok(_) => {
-            let i = tok.parse::<i64>().unwrap();
-            program.push(Op::Push(i));
-        },
-        _ => { 
-            match tok { 
-                "+" => {
-                    program.push(Op::Add);
-                },
-                "-" => {
-                    program.push(Op::Sub);
-                },
-                "." => {
-                    program.push(Op::Dump);
-                },
-                "=" => {
-                    program.push(Op::Equal);
-                },
-                "<" => {
-                    program.push(Op::LessThan);
-                },
-                ">" => {
-                    program.push(Op::GreaterThan);
-                },
-                "<=" => {
-                    program.push(Op::LessThanEqual);
-                },
-                ">=" => {
-                    program.push(Op::GreaterThanEqual);
-                },
-                "if" => {
-                    program.push(Op::If(0 as usize));
-                },
-                "else" => {
-                    program.push(Op::Else(0 as usize));
-                },
-                "end" => {
-                    program.push(Op::End(0 as usize));
-                },
-                "dup" => {
-                    program.push(Op::Duplicate);
-                },
-                "while" => {
-                    program.push(Op::While);
-                },
-                "do" => {
-                    program.push(Op::Do(0 as usize));
-                }
-                _ => {
-                    println!("{} not implemented", tok);
-                    exit(1);
-                }
+        match tok { 
+            "+" => {
+                program.push(Op::Add);
+            },
+            "-" => {
+                program.push(Op::Sub);
+            },
+            "." => {
+                program.push(Op::Dump);
+            },
+            "=" => {
+                program.push(Op::Equal);
+            },
+            "<" => {
+                program.push(Op::LessThan);
+            },
+            ">" => {
+                program.push(Op::GreaterThan);
+            },
+            "<=" => {
+                program.push(Op::LessThanEqual);
+            },
+            ">=" => {
+                program.push(Op::GreaterThanEqual);
+            },
+            "if" => {
+                program.push(Op::If(0 as usize));
+            },
+            "else" => {
+                program.push(Op::Else(0 as usize));
+            },
+            "end" => {
+                program.push(Op::End(0 as usize));
+            },
+            "dup" => {
+                program.push(Op::Duplicate);
+            },
+            "while" => {
+                program.push(Op::While);
+            },
+            "do" => {
+                program.push(Op::Do(0 as usize));
             }
+            _ => {
+                let parsed_token = tok.parse::<i64>();
+                match parsed_token{
+                    Ok(t) => {
+                        program.push(Op::Push(t));
+                    }
+                    Err(e) => {
+                        println!("{:#?}:{:#?}:{:#?}: {e:?}", token.0, token.1, token.2);
+                        exit(1);
+                    }
+                }
         }
     }
 }
 
-use std::iter::Enumerate;
-
-fn strip_line(line: &str, mut col: usize) -> usize{
-    println!("line:  {}", line);
-    while col < line.len() && line.chars().nth(col).unwrap().is_whitespace(){
-       col += 1;
+fn find_col(line: &str, mut col: usize, predicate: &dyn Fn(char) -> bool) -> usize{
+    while col < line.len() && predicate(line.chars().nth(col).unwrap()) {
+        col += 1;
     }
-
-    println!("COl {}", col);
     return col;
 }
 
-fn parse_line(line: &str) -> Enumerate<std::vec::IntoIter<&str>>{
-    // let l = line.chars().enumerate();
-    let t: &mut Vec<(usize, &str)> = &mut Vec::new();
-    let mut col = strip_line(line, 0);
+fn parse_line(line: &str) -> std::vec::IntoIter<(usize, Option<&str>)>{
+    let mut t: Vec<(usize, Option<&str>)> = Vec::new();
+    let whitespace = |x: char| x.is_whitespace();
+    let not_whitespace = |x: char| !x.is_whitespace();
+    let mut col = find_col(line, 0, &whitespace);
     while col < line.len() {
-        let mut col_end = line.find(' ').unwrap();
-        if col_end < 0 {
-            col_end = line.len();
-        }else if col_end == 0 {
-
-        }
-        t.push((col, &line[col..col_end]));
-        col = strip_line(line, 0); 
+        let col_end = find_col(line, col, &not_whitespace);
+        t.push((col, line.get(col..col_end)));
+        col = find_col(line, col_end, &whitespace);
     }
-
-
-    println!("{:?}", t);
-
-    let tokens: Vec<&str> = line.split_whitespace().collect();
-
-    let e = tokens.into_iter().enumerate();
-
+    let e = t.into_iter();
     return e;
 }
 
@@ -220,14 +205,16 @@ pub fn parse_program(program: &mut Vec<Op>, input: &str){
             file.read_to_string(&mut content).unwrap();
             let tokens: Vec<&str> = content.lines().collect();
 
-            println!("{:?}", tokens);
             let e = tokens.into_iter().enumerate();
-            println!("{:?}", e);
-
+            let mut arr: Vec<(&str, usize, usize, Option<&str>)> = Vec::new();
             for (row, line) in e {
                 for (col, tok) in parse_line(line) {
-                    parse_word_as_op(program, tok);
+                    arr.push((input, row, col, tok));
                 }
+            }
+
+            for line in &arr {
+                parse_word_as_op(program, *line); 
             }
         },
         Err(error) => {
