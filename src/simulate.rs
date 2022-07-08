@@ -1,5 +1,5 @@
 use crate::*;
-
+use std::process::exit;
 pub fn simulate_program(program: &Vec<Op>){
     let mut stack: Vec<i64> = Vec::new();
     let mut mem: [u8; MEM_CAPACITY] = [0; MEM_CAPACITY];
@@ -105,7 +105,27 @@ pub fn simulate_program(program: &Vec<Op>){
                 mem[addr] = byte;
                 ip += 1;
             },
-            Op::Syscall3 => todo!(),
+            Op::Syscall1 => {
+                ip += 1;
+            },
+            Op::Syscall3 => {
+                let syscall_number = stack.pop().unwrap();
+                let arg1 = stack.pop().unwrap();
+                let arg2 = stack.pop().unwrap() as usize;
+                let arg3 = stack.pop().unwrap() as usize;
+                let output = std::str::from_utf8(&mem[arg2..arg2+arg3]).unwrap();
+                if syscall_number == 1 {
+                    if arg1 == 1 {
+                        print!("{}", output);
+                    } else if arg1 == 2 {
+                        eprint!("{:?}", output);
+                    } else {
+                        println!("unknown file descriptor {}", arg1);
+                        exit(1);
+                    }
+                ip += 1;
+                }
+            },
         }
     }
 }

@@ -168,6 +168,12 @@ pub fn compile_program(program: &Vec<Op>, output:&str){
                 writeln!(out, "    pop rax").unwrap();
                 writeln!(out, "    mov [rax], bl").unwrap();
             },
+            Op::Syscall1 => {
+                writeln!(out, "    ;; -- syscall1 --").unwrap();
+                writeln!(out, "    pop rax").unwrap();
+                writeln!(out, "    pop rdi").unwrap();
+                writeln!(out, "    syscall").unwrap();
+            },
             Op::Syscall3 => {
                 writeln!(out, "    ;; -- syscall3 --").unwrap();
                 writeln!(out, "    pop rax").unwrap();

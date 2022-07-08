@@ -23,7 +23,7 @@ fn main() {
 
     parse::parse_program(program, &input_path);
     program = parse::crossreference_block(program);
-    parse::print(program);
+    //parse::print(program);
 
     if sub_cmd == "sim" { 
         simulate::simulate_program(program);
