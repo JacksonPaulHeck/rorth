@@ -15,4 +15,8 @@ pub enum Op {
     Dump,
     Do(usize),
     While,
+    Mem,
+    Load,
+    Store,
+    Syscall,
 }

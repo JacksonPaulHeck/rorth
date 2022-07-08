@@ -1,7 +1,8 @@
-use crate::Op;
+use crate::*;
 
 pub fn simulate_program(program: &Vec<Op>){
     let mut stack: Vec<i64> = Vec::new();
+    let mut mem: [u8; MEM_CAPACITY] = [0; MEM_CAPACITY];
     let mut ip = 0;
     while ip < program.len() {
         //println!("{:#?}", stack);
@@ -88,6 +89,23 @@ pub fn simulate_program(program: &Vec<Op>){
             Op::End(x) => {
                 ip = x;
             },
+            Op::Mem => {
+                stack.push(0);
+                ip += 1;
+            },
+            Op::Load => {
+                let addr = stack.pop().unwrap() as usize;
+                let byte = mem[addr].into();
+                stack.push(byte);
+                ip += 1;
+            }, 
+            Op::Store => {
+                let byte = stack.pop().unwrap() as u8;
+                let addr = stack.pop().unwrap() as usize;
+                mem[addr] = byte;
+                ip += 1;
+            },
+            Op::Syscall => todo!(),
         }
     }
 }

@@ -1,4 +1,4 @@
-use crate::Op;
+use crate::*;
 
 pub fn compile_program(program: &Vec<Op>, output:&str){
     use std::fs::File;
@@ -55,8 +55,8 @@ pub fn compile_program(program: &Vec<Op>, output:&str){
                 writeln!(out, "    ;; -- add --").unwrap();
                 writeln!(out, "    pop rax").unwrap();
                 writeln!(out, "    pop rbx").unwrap();
-                writeln!(out, "    add rbx, rax").unwrap();
-                writeln!(out, "    push rbx").unwrap();
+                writeln!(out, "    add rax, rbx").unwrap();
+                writeln!(out, "    push rax").unwrap();
             },
             Op::Sub => {
                 writeln!(out, "    ;; -- sub --").unwrap();
@@ -151,6 +151,24 @@ pub fn compile_program(program: &Vec<Op>, output:&str){
                 writeln!(out, "    test rax, rax").unwrap();
                 writeln!(out, "    jz addr_{}", x).unwrap();
             },
+            Op::Mem => {
+                writeln!(out, "    ;; -- mem --").unwrap();
+                writeln!(out, "    push mem").unwrap();
+            },
+            Op::Load => {
+                writeln!(out, "    ;; -- load --").unwrap();
+                writeln!(out, "    pop rax").unwrap();
+                writeln!(out, "    xor rbx, rbx").unwrap();
+                writeln!(out, "    mov bl, [rax]").unwrap();
+                writeln!(out, "    push rbx").unwrap();
+            },
+            Op::Store => {
+                writeln!(out, "    ;; -- store --").unwrap();
+                writeln!(out, "    pop rbx").unwrap();
+                writeln!(out, "    pop rax").unwrap();
+                writeln!(out, "    mov [rax], bl").unwrap();
+            },
+            Op::Syscall => todo!(),
         }
         ip += 1;
     }
@@ -159,5 +177,7 @@ pub fn compile_program(program: &Vec<Op>, output:&str){
     writeln!(out, "    mov rax, 60").unwrap();
     writeln!(out, "    mov rdi, 0").unwrap();
     writeln!(out, "    syscall").unwrap();
+    writeln!(out, "segment .bss").unwrap();
+    writeln!(out, "mem: resb {}", MEM_CAPACITY).unwrap();
 }
 

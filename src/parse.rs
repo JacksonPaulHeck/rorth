@@ -106,6 +106,15 @@ pub fn print (program: &mut Vec<Op>) {
             },
             Op::Do(x) => {
                 println!("do {}", x);
+            },
+            Op::Mem => {
+                println!("mem");
+            }
+            Op::Load => {
+                println!("load");
+            }
+            Op::Store => {
+                println!("store");
             }
             _ => {}
         }
@@ -123,7 +132,7 @@ fn parse_word_as_op(program: &mut Vec<Op>, token: (&str, usize, usize, Option<&s
             "-" => {
                 program.push(Op::Sub);
             },
-            "." => {
+            "dump" => {
                 program.push(Op::Dump);
             },
             "=" => {
@@ -158,7 +167,16 @@ fn parse_word_as_op(program: &mut Vec<Op>, token: (&str, usize, usize, Option<&s
             },
             "do" => {
                 program.push(Op::Do(0 as usize));
-            }
+            },
+            "mem" => {
+                program.push(Op::Mem);
+            },
+            "load" => {
+                program.push(Op::Load);
+            },
+            "store" => {
+                program.push(Op::Store);
+            },
             _ => {
                 let parsed_token = tok.parse::<i64>();
                 match parsed_token{
@@ -170,7 +188,7 @@ fn parse_word_as_op(program: &mut Vec<Op>, token: (&str, usize, usize, Option<&s
                         exit(1);
                     }
                 }
-        }
+            }
     }
 }
 
