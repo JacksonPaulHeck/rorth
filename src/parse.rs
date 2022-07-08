@@ -115,6 +115,9 @@ pub fn print (program: &mut Vec<Op>) {
             }
             Op::Store => {
                 println!("store");
+            },
+            Op::Syscall3 => {
+                println!("syscall3");
             }
             _ => {}
         }
@@ -177,6 +180,10 @@ fn parse_word_as_op(program: &mut Vec<Op>, token: (&str, usize, usize, Option<&s
             "store" => {
                 program.push(Op::Store);
             },
+            "syscall3" => {
+                program.push(Op::Syscall3);
+            },
+
             _ => {
                 let parsed_token = tok.parse::<i64>();
                 match parsed_token{

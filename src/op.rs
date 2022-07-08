@@ -18,5 +18,5 @@ pub enum Op {
     Mem,
     Load,
     Store,
-    Syscall,
+    Syscall3,
 }

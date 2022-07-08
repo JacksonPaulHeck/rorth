@@ -105,7 +105,7 @@ pub fn simulate_program(program: &Vec<Op>){
                 mem[addr] = byte;
                 ip += 1;
             },
-            Op::Syscall => todo!(),
+            Op::Syscall3 => todo!(),
         }
     }
 }

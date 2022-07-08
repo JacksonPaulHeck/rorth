@@ -168,7 +168,14 @@ pub fn compile_program(program: &Vec<Op>, output:&str){
                 writeln!(out, "    pop rax").unwrap();
                 writeln!(out, "    mov [rax], bl").unwrap();
             },
-            Op::Syscall => todo!(),
+            Op::Syscall3 => {
+                writeln!(out, "    ;; -- syscall3 --").unwrap();
+                writeln!(out, "    pop rax").unwrap();
+                writeln!(out, "    pop rdi").unwrap();
+                writeln!(out, "    pop rsi").unwrap();
+                writeln!(out, "    pop rdx").unwrap();
+                writeln!(out, "    syscall").unwrap();
+            },
         }
         ip += 1;
     }
