@@ -5,7 +5,7 @@ pub fn simulate_program(program: &Vec<Op>){
     let mut mem: [u8; MEM_CAPACITY] = [0; MEM_CAPACITY];
     let mut ip = 0;
     while ip < program.len() {
-        //println!("{:#?}", stack);
+        // println!("{:#?}", stack);
         let op = program[ip];
         match op {
             Op::Push(x) => {
@@ -54,9 +54,45 @@ pub fn simulate_program(program: &Vec<Op>){
                 stack.push((a >= b) as i64);
                 ip += 1;
             },
+            Op::BitwiseShiftRight => {
+                let b = stack.pop().unwrap();
+                let a = stack.pop().unwrap();
+                stack.push((a >> b) as i64);
+                ip += 1;
+            },
+            Op::BitwiseShiftLeft => {
+                let b = stack.pop().unwrap();
+                let a = stack.pop().unwrap();
+                stack.push((a << b) as i64);
+                ip += 1;
+            },
+            Op::BitwiseOr => {
+                let b = stack.pop().unwrap();
+                let a = stack.pop().unwrap();
+                stack.push((a | b) as i64);
+                ip += 1;
+            },
+            Op::BitwiseAnd => {
+                let b = stack.pop().unwrap();
+                let a = stack.pop().unwrap();
+                stack.push((a & b) as i64);
+                ip += 1;
+            },
+
+
+
             Op::Duplicate => {
                 let a = stack.pop().unwrap();
                 stack.push(a);
+                stack.push(a);
+                ip += 1;
+            },
+            Op::Duplicate2 => {
+                let a = stack.pop().unwrap();
+                let b = stack.pop().unwrap();
+                stack.push(b);
+                stack.push(a);
+                stack.push(b);
                 stack.push(a);
                 ip += 1;
             },
@@ -64,6 +100,11 @@ pub fn simulate_program(program: &Vec<Op>){
                 println!("{:?}", stack.pop().unwrap());
                 ip += 1;
             },
+            Op::Drop => {
+                stack.pop();
+                ip += 1;
+            },
+
             Op::While => {
                 ip += 1;
             },

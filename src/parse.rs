@@ -80,6 +80,9 @@ pub fn print (program: &mut Vec<Op>) {
             Op::Dump => {
                 println!("dump");
             },
+            Op::Drop => {
+                println!("drop");
+            },
             Op::If(x) => {
                 println!("if {}", x);
             },
@@ -88,6 +91,18 @@ pub fn print (program: &mut Vec<Op>) {
             },
             Op::LessThan => {
                 println!("lessthan");
+            },
+            Op::BitwiseShiftRight => {
+                println!("shr");
+            },
+            Op::BitwiseShiftLeft => {
+                println!("shl");
+            },
+            Op::BitwiseOr => {
+                println!("bor");
+            },
+            Op::BitwiseAnd => {
+                println!("band");
             },
             Op::GreaterThan => {
                 println!("greaterthan");
@@ -100,6 +115,9 @@ pub fn print (program: &mut Vec<Op>) {
             },
             Op::Duplicate => {
                 println!("duplicate");
+            },
+            Op::Duplicate2 => {
+                println!("duplicate2");
             },
             Op::While => {
                 println!("while");
@@ -141,6 +159,9 @@ fn parse_word_as_op(program: &mut Vec<Op>, token: (&str, usize, usize, Option<&s
             "dump" => {
                 program.push(Op::Dump);
             },
+            "drop" => {
+                program.push(Op::Drop);
+            },
             "=" => {
                 program.push(Op::Equal);
             },
@@ -167,6 +188,21 @@ fn parse_word_as_op(program: &mut Vec<Op>, token: (&str, usize, usize, Option<&s
             },
             "dup" => {
                 program.push(Op::Duplicate);
+            },
+            "dup2" => {
+                program.push(Op::Duplicate2);
+            },
+            "shr" => {
+                program.push(Op::BitwiseShiftRight);
+            },
+            "shl" => {
+                program.push(Op::BitwiseShiftLeft);
+            },
+            "bor" => {
+                program.push(Op::BitwiseOr);
+            },
+            "band" => {
+                program.push(Op::BitwiseAnd);
             },
             "while" => {
                 program.push(Op::While);

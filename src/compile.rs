@@ -115,6 +115,38 @@ pub fn compile_program(program: &Vec<Op>, output:&str){
                 writeln!(out, "    cmovge rcx, rdx").unwrap();
                 writeln!(out, "    push rcx").unwrap();
             },
+            Op::BitwiseShiftRight => {
+                writeln!(out, "    ;; -- shr --").unwrap();
+                writeln!(out, "    pop rcx").unwrap();
+                writeln!(out, "    pop rbx").unwrap();
+                writeln!(out, "    shr rbx, cl").unwrap();
+                writeln!(out, "    push rbx").unwrap();
+            },
+            Op::BitwiseShiftLeft => {
+                writeln!(out, "    ;; -- shl --").unwrap();
+                writeln!(out, "    pop rcx").unwrap();
+                writeln!(out, "    pop rbx").unwrap();
+                writeln!(out, "    shl rbx, cl").unwrap();
+                writeln!(out, "    push rbx").unwrap();
+            },
+            Op::BitwiseOr => {
+                writeln!(out, "    ;; -- bor --").unwrap();
+                writeln!(out, "    pop rax").unwrap();
+                writeln!(out, "    pop rbx").unwrap();
+                writeln!(out, "    or rbx, rax").unwrap();
+                writeln!(out, "    push rbx").unwrap();
+            },
+            Op::BitwiseAnd=> {
+                writeln!(out, "    ;; -- band --").unwrap();
+                writeln!(out, "    pop rax").unwrap();
+                writeln!(out, "    pop rbx").unwrap();
+                writeln!(out, "    and rbx, rax").unwrap();
+                writeln!(out, "    push rbx").unwrap();
+            },
+            Op::Drop => {
+                writeln!(out, "    ;; -- drop --").unwrap();
+                writeln!(out, "    pop rdi").unwrap();
+            },
             Op::Dump => {
                 writeln!(out, "    ;; -- dump --").unwrap();
                 writeln!(out, "    pop rdi").unwrap();
@@ -145,6 +177,16 @@ pub fn compile_program(program: &Vec<Op>, output:&str){
                 writeln!(out, "    push rax").unwrap();
                 writeln!(out, "    push rax").unwrap();
             },
+            Op::Duplicate2 => {
+                writeln!(out, "    ;; -- duplicate --").unwrap();
+                writeln!(out, "    pop rax").unwrap();
+                writeln!(out, "    pop rbx").unwrap();
+                writeln!(out, "    push rbx").unwrap();
+                writeln!(out, "    push rax").unwrap();
+                writeln!(out, "    push rbx").unwrap();
+                writeln!(out, "    push rax").unwrap();
+            },
+
             Op::Do(x) => {
                 writeln!(out, "    ;; -- do --").unwrap();
                 writeln!(out, "    pop rax").unwrap();
@@ -186,7 +228,7 @@ pub fn compile_program(program: &Vec<Op>, output:&str){
         ip += 1;
     }
 
-    writeln!(out, "addr_{}", ip).unwrap();
+    writeln!(out, "addr_{}:", ip).unwrap();
     writeln!(out, "    mov rax, 60").unwrap();
     writeln!(out, "    mov rdi, 0").unwrap();
     writeln!(out, "    syscall").unwrap();

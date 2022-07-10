@@ -14,4 +14,3 @@ mem dup 72  store
 1 + dup 10  store
 1 + mem - mem 1 1 syscall3
 
-
