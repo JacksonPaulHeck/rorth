@@ -78,9 +78,6 @@ pub fn simulate_program(program: &Vec<Op>){
                 stack.push((a & b) as i64);
                 ip += 1;
             },
-
-
-
             Op::Duplicate => {
                 let a = stack.pop().unwrap();
                 stack.push(a);

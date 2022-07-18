@@ -280,8 +280,8 @@ pub fn parse_program(program: &mut Vec<Op>, input: &str){
                 }
             }
 
-            for line in &arr {
-                parse_word_as_op(program, *line); 
+            for token in &arr {
+                parse_word_as_op(program, *token); 
             }
         },
         Err(error) => {
